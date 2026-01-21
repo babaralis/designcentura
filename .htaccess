@@ -1,0 +1,150 @@
+# ----------------------------------------------------------------------
+# PHP HANDLER (cPanel Auto)
+# ----------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------
+# GENERAL SECURITY & HARDENING
+# ----------------------------------------------------------------------
+
+# Disable directory browsing
+Options -Indexes
+
+# Disable server signature
+ServerSignature Off
+
+# Prevent access to sensitive files
+<FilesMatch "(\.(env|log|ini|phps|fla|psd|sh|sql|bak|zip|tar|gz))$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Block access to .htaccess itself
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Prevent access to git/SVN folders
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.svn
+
+# Protect against MIME sniffing
+Header set X-Content-Type-Options "nosniff"
+
+# Clickjacking protection
+Header always append X-Frame-Options SAMEORIGIN
+
+# XSS (Cross-site scripting) protection
+Header set X-XSS-Protection "1; mode=block"
+
+# Referrer Policy
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Disable ETags
+FileETag None
+
+
+# ----------------------------------------------------------------------
+# HOTLINK PROTECTION
+# ----------------------------------------------------------------------
+RewriteEngine On
+
+# Replace "example.com" with your domain if you want strict hotlink blocking
+#RewriteCond %{HTTP_REFERER} !^$
+#RewriteCond %{HTTP_REFERER} !^https?://(www\.)?example\.com [NC]
+#RewriteRule \.(jpg|jpeg|png|gif|svg|webp)$ - [F,NC,L]
+
+
+# ----------------------------------------------------------------------
+# FORCE HTTPS ALWAYS
+# ----------------------------------------------------------------------
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301,NE]
+
+
+# ----------------------------------------------------------------------
+# MAKE index.php DEFAULT (domain opens index.php)
+# ----------------------------------------------------------------------
+DirectoryIndex index.php
+
+
+# ----------------------------------------------------------------------
+# REMOVE /index.php FROM URL
+# Example:
+#    site.com/index.php → site.com
+# ----------------------------------------------------------------------
+RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
+RewriteRule ^index\.php$ https://%{HTTP_HOST}/ [R=301,L]
+
+
+# ----------------------------------------------------------------------
+# PREVENT DIRECT ACCESS TO PHP FILES IN SUBFOLDERS (Optional Strong Security)
+# Allows only index.php & api endpoints.
+# Comment these lines if you use many PHP files inside subdirectories.
+# ----------------------------------------------------------------------
+#<FilesMatch "\.php$">
+#    Order allow,deny
+#    Deny from all
+#</FilesMatch>
+
+
+# ----------------------------------------------------------------------
+# BLOCK COMMON MALICIOUS REQUESTS & PHP ATTACKS
+# ----------------------------------------------------------------------
+# Block bad query strings
+RewriteCond %{QUERY_STRING} (\.\.\/|\%2e\%2e) [NC,OR]
+RewriteCond %{QUERY_STRING} (GLOBALS|_REQUEST|_SERVER|_ENV) [NC]
+RewriteRule .* - [F]
+
+# Block dangerous PHP execution in uploads
+RewriteRule ^uploads/.*\.(php|php7|php8|phtml)$ - [F,NC]
+
+
+# ----------------------------------------------------------------------
+# FILE SECURITY HEADERS
+# ----------------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+<IfModule php8_module>
+   php_flag display_errors Off
+   php_value max_execution_time 60
+   php_value max_input_time 60
+   php_value max_input_vars 1000
+   php_value memory_limit 512M
+   php_value post_max_size 512M
+   php_value session.gc_maxlifetime 1440
+   php_value session.save_path "/var/cpanel/php/sessions/ea-php82"
+   php_value upload_max_filesize 512M
+   php_flag zlib.output_compression Off
+</IfModule>
+<IfModule lsapi_module>
+   php_flag display_errors Off
+   php_value max_execution_time 60
+   php_value max_input_time 60
+   php_value max_input_vars 1000
+   php_value memory_limit 512M
+   php_value post_max_size 512M
+   php_value session.gc_maxlifetime 1440
+   php_value session.save_path "/var/cpanel/php/sessions/ea-php82"
+   php_value upload_max_filesize 512M
+   php_flag zlib.output_compression Off
+</IfModule>
+# END cPanel-generated php ini directives, do not edit
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php82” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php82 .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
